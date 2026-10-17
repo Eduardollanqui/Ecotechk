@@ -8,13 +8,13 @@ class EmpleadoRepositorio:
         with obtener_conexion() as conn, conn.cursor() as cursor:
             # Insertar en tabla persona
             cursor.execute(
-                "INSERT INTO persona (rut, nombre) VALUES (:1, :2)",
-                (empleado.rut, empleado.nombre),
+            "INSERT INTO persona (rut, nombre) VALUES (:1, :2)",
+            (empleado.rut, empleado.nombre),
             )
             # Insertar en tabla empleado
             cursor.execute(
-                "INSERT INTO empleado (rut, fecha_ingreso, sueldo_base, activo) VALUES (:1, :2, :3, :4)",
-                (empleado.rut, empleado.fecha_ingreso, empleado.sueldo_base, empleado.activo),
+            "INSERT INTO empleado (rut, fecha_ingreso, sueldo_base, activo) VALUES (:1, :2, :3, :4)",
+            (empleado.rut, empleado.fecha_ingreso, empleado.sueldo_base, empleado.activo),
             )
             conn.commit()
         return empleado
@@ -38,17 +38,17 @@ class EmpleadoRepositorio:
     def obtener(self, rut: str):
         with obtener_conexion() as conn, conn.cursor() as cursor:
             fila = cursor.execute(
-                """SELECT p.rut, p.nombre, e.fecha_ingreso, e.sueldo_base, e.activo 
-                FROM empleado e JOIN persona p ON p.rut = e.rut 
-                WHERE e.rut = :1""",
-                (rut,),
+            """SELECT p.rut, p.nombre, e.fecha_ingreso, e.sueldo_base, e.activo 
+            FROM empleado e JOIN persona p ON p.rut = e.rut 
+            WHERE e.rut = :1""",
+            (rut,),
             ).fetchone()
         return self._fila_a_empleado(fila) if fila else None
 
     def listar(self, nombre_contiene=None):
         sql = """SELECT p.rut, p.nombre, e.fecha_ingreso, e.sueldo_base, e.activo 
-                FROM empleado e JOIN persona p ON p.rut = e.rut 
-                WHERE e.activo = 1"""
+            FROM empleado e JOIN persona p ON p.rut = e.rut 
+            WHERE e.activo = 1"""
         params = []
         if nombre_contiene:
             sql += " AND p.nombre LIKE :1"
@@ -60,9 +60,8 @@ class EmpleadoRepositorio:
 
     def actualizar(self, empleado: Empleado):
         with obtener_conexion() as conn, conn.cursor() as cursor:
-            cursor.execute(
-                "UPDATE empleado SET sueldo_base = :1 WHERE rut = :2",
-                (empleado.sueldo_base, empleado.rut),
+            cursor.execute("UPDATE empleado SET sueldo_base = :1 WHERE rut = :2",
+            (empleado.sueldo_base, empleado.rut),
             )
             conn.commit()
             rowcount = cursor.rowcount
