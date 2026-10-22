@@ -1,24 +1,47 @@
 from datetime import date
+import oracledb
 from dominio.empleado import Empleado
+from dominio.excepciones import EmpleadoYaExisteException, ErrorBaseDeDatosException
 from infraestructura.conexion import obtener_conexion
 
 class EmpleadoRepositorio:
     
     def guardar(self, empleado: Empleado):
-        with obtener_conexion() as conn, conn.cursor() as cursor:
-            # Insertar en tabla persona
+        """
+        paso 1, 2 y 3: Transaccion atomica (todo o nada):Ambas inserciones se hacen bajo la misma conexion.
+        Si ocurre un error, se realiza rollback eexplicito. Manejo de execpiones especificas de Oracle
+        (ORA-00001: unique constraint violated)
+        """
+        conn = None
+        try:
+            conn = obtener_conexion()
+            cursor = conn.cursor()
+            # 1. Insertar en tabla persona
             cursor.execute(
-            "INSERT INTO persona (rut, nombre) VALUES (:1, :2)",
-            (empleado.rut, empleado.nombre),
+                "INSERT INTO persona (rut, nombre) VALUES (:1, :2)",
+            (empleado.rut, empleado.nombre)
             )
-            # Insertar en tabla empleado
+            #2. Insertar en tabla empleado
             cursor.execute(
             "INSERT INTO empleado (rut, fecha_ingreso, sueldo_base, activo) VALUES (:1, :2, :3, :4)",
             (empleado.rut, empleado.fecha_ingreso, empleado.sueldo_base, empleado.activo),
             )
+            # Si ambas consultas fueron exitosas, se aprueba la transacción (Todo)
             conn.commit()
-        return empleado
-
+            return empleado
+        except oracledb.DatabaseError as e:
+            if conn:
+                conn.rollback()  # Operacion todo o nada (Nada)
+            error, = e.args
+            #Ora-00001: Restricción única violada(Clave primaria duplicada)
+            if error.code == 1:
+                raise EmpleadoYaExisteException(f"El RUT {empleado.rut} ya existe en la base de datos.") from e
+            else:
+                raise ErrorBaseDeDatosException(f"Error inesperado en la base de datos: {error.message}") from e
+        finally:
+            if conn:
+                conn.close()
+                
     @staticmethod
     def _fila_a_empleado(fila):
         fecha = fila[2]
