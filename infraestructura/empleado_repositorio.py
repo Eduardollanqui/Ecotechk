@@ -1,7 +1,7 @@
 from datetime import date
 import oracledb
 from dominio.empleado import Empleado
-from dominio.excepciones import EmpleadoYaExisteException, ErrorBaseDeDatosException
+from dominio.exepciones import EmpleadoYaExisteException, ErrorBaseDeDatosException
 from infraestructura.conexion import obtener_conexion
 
 class EmpleadoRepositorio:
